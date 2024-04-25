@@ -13,6 +13,8 @@ services:
       - "500"
       - "4500"
 
+    user: ${UID}:${GID}
+
     volumes:
       - ./etc-strongswan:/etc/strongswan
 

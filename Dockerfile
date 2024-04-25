@@ -20,6 +20,8 @@ ENV SYSCONFDIR=/etc/strongswan
 RUN apt-get update && \
     apt-get install -y \
       build-essential \
+      libcap-dev \
+      libcap2-bin \
       libssl-dev && \
     rm -rf /var/lib/apt/lists/*
 
@@ -49,9 +51,14 @@ RUN ./configure \
       --enable-resolve \
       --enable-eap-identity \
       --enable-eap-tls \
-      --enable-updown && \
+      --enable-updown \
+      --with-capabilities=libcap \
+      --with-piddir=/var/run/strongswan && \
     make -j "$(nproc)" all && \
     make install DESTDIR=${INSTALLDIR}
+
+# Set capabilities to run charon rootless
+RUN setcap 'cap_net_admin,cap_net_bind_service=+eip' ${INSTALLDIR}/usr/libexec/ipsec/charon
 
 # Create symlink for charon
 RUN ln -sf /usr/libexec/ipsec/charon ${INSTALLDIR}/usr/bin/charon
@@ -64,8 +71,17 @@ FROM debian:bookworm-slim
 COPY --from=build /install /
 
 RUN apt-get update && \
-    apt-get install -y iptables libssl3 && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y iptables libcap2-bin libssl3 && \
+    # Set capabilities to run iptables rootless
+    setcap 'cap_net_admin=+ep' "$(realpath /usr/sbin/iptables)" && \
+    apt-get purge -y libcap2-bin && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd --system strongswan && \
+    # strongswan piddir must be writeable for any user that might
+    # get mapped into the container
+    mkdir -p /var/run/strongswan && chmod 0777 /var/run/strongswan
+
+USER strongswan
 
 EXPOSE 500/udp
 EXPOSE 4500/udp
