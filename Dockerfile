@@ -1,0 +1,73 @@
+FROM debian:bookworm-slim as source
+
+ENV VERSION=5.9.14 \
+    CHECKSUM=7bef87faf92ad5ffa5342a90c326223ccf64864df8b4ee3a506f325d7f833c9e
+
+WORKDIR /source
+ADD --checksum="sha256:${CHECKSUM}" "https://github.com/strongswan/strongswan/releases/download/${VERSION}/strongswan-${VERSION}.tar.gz" .
+
+RUN tar -xf "strongswan-${VERSION}.tar.gz" -C . --strip-components=1 && \
+    rm "strongswan-${VERSION}.tar.gz"
+
+FROM debian:bookworm-slim as build
+
+ENV INSTALLDIR=/install
+
+# Place all configuration files into a seperate directory
+# This allows us to use a single mounting point at runtime
+ENV SYSCONFDIR=/etc/strongswan
+
+RUN apt-get update && \
+    apt-get install -y \
+      build-essential \
+      libssl-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY --from=source /source .
+
+RUN ./configure \
+      --prefix=/usr \
+      --sysconfdir=${SYSCONFDIR} \
+      --disable-defaults \
+      --enable-silent-rules \
+      --enable-charon \
+      --enable-ikev2 \
+      --enable-vici \
+      --enable-swanctl \
+      --enable-nonce \
+      --enable-random \
+      --enable-drbg \
+      --enable-openssl \
+      --enable-pem \
+      --enable-x509 \
+      --enable-constraints \
+      --enable-pki \
+      --enable-pubkey \
+      --enable-socket-default \
+      --enable-kernel-netlink \
+      --enable-resolve \
+      --enable-eap-identity \
+      --enable-eap-tls \
+      --enable-updown && \
+    make -j "$(nproc)" all && \
+    make install DESTDIR=${INSTALLDIR}
+
+# Create symlink for charon
+RUN ln -sf /usr/libexec/ipsec/charon ${INSTALLDIR}/usr/bin/charon
+
+# Copy additional configuration files
+COPY strongswan.d ${INSTALLDIR}${SYSCONFDIR}/strongswan.d
+
+FROM debian:bookworm-slim
+
+COPY --from=build /install /
+
+RUN apt-get update && \
+    apt-get install -y iptables libssl3 && \
+    rm -rf /var/lib/apt/lists/*
+
+EXPOSE 500/udp
+EXPOSE 4500/udp
+
+CMD [ "charon" ]
