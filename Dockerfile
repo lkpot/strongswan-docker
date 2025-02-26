@@ -1,7 +1,7 @@
-FROM debian:bookworm-slim as source
+FROM debian:bookworm-slim AS source
 
-ENV VERSION=5.9.14 \
-    CHECKSUM=7bef87faf92ad5ffa5342a90c326223ccf64864df8b4ee3a506f325d7f833c9e
+ENV VERSION=6.0.0 \
+    CHECKSUM=028c23911cbd8f87922a331b7750012b86ef7e4609894b57e7550214714952a1
 
 WORKDIR /source
 ADD --checksum="sha256:${CHECKSUM}" "https://github.com/strongswan/strongswan/releases/download/${VERSION}/strongswan-${VERSION}.tar.gz" .
@@ -9,7 +9,7 @@ ADD --checksum="sha256:${CHECKSUM}" "https://github.com/strongswan/strongswan/re
 RUN tar -xf "strongswan-${VERSION}.tar.gz" -C . --strip-components=1 && \
     rm "strongswan-${VERSION}.tar.gz"
 
-FROM debian:bookworm-slim as build
+FROM debian:bookworm-slim AS build
 
 ENV INSTALLDIR=/install
 
@@ -63,7 +63,8 @@ RUN setcap 'cap_net_admin,cap_net_bind_service=+eip' ${INSTALLDIR}/usr/libexec/i
 # Create symlink for charon
 RUN ln -sf /usr/libexec/ipsec/charon ${INSTALLDIR}/usr/bin/charon
 
-# Copy additional configuration files
+# Copy configuration files
+COPY strongswan.conf ${INSTALLDIR}${SYSCONFDIR}
 COPY strongswan.d ${INSTALLDIR}${SYSCONFDIR}/strongswan.d
 
 FROM debian:bookworm-slim

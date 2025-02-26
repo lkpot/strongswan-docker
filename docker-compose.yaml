@@ -20,6 +20,6 @@ services:
     user: ${UID}:${GID}
 
     volumes:
-      - ./etc-strongswan:/etc/strongswan
+      - ./swanctl:/etc/strongswan/swanctl
 
     restart: unless-stopped
