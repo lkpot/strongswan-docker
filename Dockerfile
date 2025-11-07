@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim AS source
 
-ENV VERSION=6.0.2 \
-    CHECKSUM=f8cc16057eedcab5a542d732f04c8522232254426fa57570f18598de38e06e62
+ENV VERSION=6.0.3 \
+    CHECKSUM=3cc78ad7d7e503f0f25cca458df5d9e8eb835b7488e05cb39ddf87e865f6d644
 
 WORKDIR /source
 ADD --checksum="sha256:${CHECKSUM}" "https://github.com/strongswan/strongswan/releases/download/${VERSION}/strongswan-${VERSION}.tar.gz" .
