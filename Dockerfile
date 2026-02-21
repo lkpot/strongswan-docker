@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim AS source
 
-ENV VERSION=6.0.3 \
-    CHECKSUM=3cc78ad7d7e503f0f25cca458df5d9e8eb835b7488e05cb39ddf87e865f6d644
+ENV VERSION=6.0.4 \
+    CHECKSUM=7e1e7be46393477f908d82968162d409a28c47c1ba7d60e17122670a129a79f8
 
 WORKDIR /source
 ADD --checksum="sha256:${CHECKSUM}" "https://github.com/strongswan/strongswan/releases/download/${VERSION}/strongswan-${VERSION}.tar.gz" .
@@ -13,7 +13,7 @@ FROM debian:bookworm-slim AS build
 
 ENV INSTALLDIR=/install
 
-# Place all configuration files into a seperate directory
+# Place all configuration files into a separate directory
 # This allows us to use a single mounting point at runtime
 ENV SYSCONFDIR=/etc/strongswan
 
