@@ -1,7 +1,7 @@
 FROM debian:bookworm-slim AS source
 
-ENV VERSION=6.0.7 \
-    CHECKSUM=b58266a437f054fbdba90db4555e92248ed80be383ca7dc903e681e24ac1f852
+ENV VERSION=6.1.0 \
+    CHECKSUM=d9484eea319481bda86f992fa69cbdbdd9c0d6f8b9a4bd793a7df45c0760d963
 
 WORKDIR /source
 ADD --checksum="sha256:${CHECKSUM}" "https://github.com/strongswan/strongswan/releases/download/${VERSION}/strongswan-${VERSION}.tar.gz" .
@@ -22,7 +22,8 @@ RUN apt-get update && \
       build-essential \
       libcap-dev \
       libcap2-bin \
-      libssl-dev && \
+      libssl-dev \
+      pkg-config && \
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
